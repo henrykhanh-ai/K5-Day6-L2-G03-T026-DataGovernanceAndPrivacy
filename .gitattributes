@@ -1,0 +1,2 @@
+# Giữ nguyên byte của fixtures (manifest kiểm hash sha256) - không cho Git đổi LF->CRLF trên Windows
+fixtures/** -text
