@@ -1,0 +1,16 @@
+{
+  "status": "HOLD",
+  "reason_code": "REVIEW_PENDING",
+  "reason": "Top-B queue not reviewed by a human yet",
+  "owner": "Nguyen Duy Khanh (Lead)",
+  "scope": "t02",
+  "evidence": [],
+  "metrics": {
+    "n_images": 96,
+    "recapture_rate": 0.4583,
+    "max_recapture_rate": 0.15,
+    "n_reviewed": 0
+  },
+  "ts": "2026-11-14T09:48:37+00:00",
+  "canonical": "HOLD"
+}

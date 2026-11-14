@@ -1,0 +1,28 @@
+{
+  "track": "t02",
+  "run_name": "poc",
+  "status": 0,
+  "seed": 42,
+  "offline": true,
+  "input": "fixtures\\t02_raw_qc",
+  "output": "out\\poc",
+  "pipeline": "src.pipeline",
+  "config_hash": "9f96589ae1bd",
+  "git_sha": "63a5a89",
+  "runtime_seconds": 0.7715,
+  "stats": {
+    "n_recapture": 44,
+    "n_items": 96,
+    "n_reviewed": 0
+  },
+  "machine": {
+    "python": "3.13.4",
+    "platform": "Windows-10-10.0.19045-SP0",
+    "processor": "Intel64 Family 6 Model 158 Stepping 9, GenuineIntel"
+  },
+  "output_check": {
+    "pred_file": "out\\poc\\ranked_review.csv",
+    "exists": true,
+    "missing_columns": []
+  }
+}
