@@ -128,7 +128,7 @@ Nguồn: `reports/internal_eval_dev.md` (gold set dev, B = 20, Recall trong top-
 | camera = cam_A | 36 (18) | 8/18 = 0,44 · FP 5 | 15/18 = 0,83 · FP 0 | |
 | camera = cam_B | 20 (15) | 7/15 = 0,47 | **5/15 = 0,33** | điểm yếu chính của PoC |
 
-PoC đoán **đúng loại lỗi** cho 27/33 ảnh lỗi = 0,82 (95% CI 0,66–0,91); 6 ảnh sai loại đều là ảnh bị đoán `none` (bỏ sót).
+Loại lỗi đúng (trên 33 ảnh lỗi): **thuật toán PoC trước review 27/33 = 0,82** (95% CI 0,66–0,91; 6 ảnh sai đều là ảnh bị đoán `none` — bỏ sót). **Sau khi áp review của An: 23/33 = 0,70** (95% CI 0,53–0,83) — giảm đúng 4 ảnh vì An reject 4 ảnh ngày bị tối mà gold set gán `dark` (failure case 2). Recall/Precision@20 không đổi vì review không sửa điểm xếp hạng. `reports/internal_eval_dev.md` hiện chạy trên `out/poc` đã áp review.
 
 - **Failure case 1 — bỏ sót ảnh mờ của cam_B** (miss, ảnh trong `demo/`): 6 ảnh lỗi có z < 3 bị đoán `none`; **5/6 là ảnh blur của
   cam_B**: `img_18_0` (night, z = 0,3), `img_21_0` (day, z = 0,4), `img_09_0` (z = 1,2), `img_12_0` (z = 1,2), `img_00_0` (z = 2,4);
