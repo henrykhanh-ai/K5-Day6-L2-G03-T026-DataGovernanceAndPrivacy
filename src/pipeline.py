@@ -14,6 +14,8 @@ Never reads fixtures/*/gt/.
 """
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
@@ -133,14 +135,19 @@ def decide(ctx: RunContext, final: pd.DataFrame) -> Decision:
     max_rate = float(ctx.param("max_recapture_rate", 0.15))
     metrics = {"n_images": len(final), "recapture_rate": round(rate, 4), "max_recapture_rate": max_rate,
                "n_reviewed": ctx.stats.get("n_reviewed", 0)}
+    # Files backing the decision (rubric: no decision without evidence). Only list files that exist.
+    candidates = [ctx.out("ranked_review.csv"), ctx.out("review_queue.csv"), ctx.out("review_queue_reviewed.csv"),
+                  ctx.out("audit_log.jsonl"), Path("reports/internal_eval_dev.md"), Path("reports/review_slices.md")]
+    evidence = [Path(c).as_posix() for c in candidates if Path(c).exists()]
+    kw = {"metrics": metrics, "evidence": evidence}
     if ctx.stats.get("n_reviewed", 0) == 0:
-        return Decision("HOLD", "REVIEW_PENDING", "Top-B queue not reviewed by a human yet", owner, "t02", metrics=metrics)
+        return Decision("HOLD", "REVIEW_PENDING", "Top-B queue not reviewed by a human yet", owner, "t02", **kw)
     if ctx.stats.get("n_escalated", 0):
-        return Decision("HOLD", "ESCALATED_ITEMS", "A reviewer escalated items; second review needed", owner, "t02", metrics=metrics)
+        return Decision("HOLD", "ESCALATED_ITEMS", "A reviewer escalated items; second review needed", owner, "t02", **kw)
     if rate > max_rate:
         return Decision("REWORK", "RECAPTURE_RATE_HIGH",
-                        f"{rate:.0%} of images need recapture (> {max_rate:.0%}); recapture before release", owner, "t02", metrics=metrics)
-    return Decision("GO", "QC_PASSED", f"Recapture rate {rate:.0%} within limit; flagged images excluded", owner, "t02", metrics=metrics)
+                        f"{rate:.0%} of images need recapture (> {max_rate:.0%}); recapture before release", owner, "t02", **kw)
+    return Decision("GO", "QC_PASSED", f"Recapture rate {rate:.0%} within limit; flagged images excluded", owner, "t02", **kw)
 
 
 def run(ctx: RunContext) -> None:

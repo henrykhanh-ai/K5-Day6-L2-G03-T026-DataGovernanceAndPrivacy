@@ -2,11 +2,11 @@ image_id,score,pred_defect_type,pred_action,reason,camera_id,light,split
 img_23_3,5.90292,dark,RECAPTURE,dark (z=365.1),cam_A,day,eval
 img_17_3,5.902759,dark,RECAPTURE,dark (z=365.0),cam_A,day,eval
 img_15_3,5.634756,dark,RECAPTURE,dark (z=279.0),cam_B,dusk,eval
-img_02_3,5.629647,dark,RECAPTURE,dark (z=277.6),cam_A,day,dev
-img_20_2,5.614945,dark,RECAPTURE,dark (z=273.5),cam_A,day,dev
-img_10_3,5.602078,dark,RECAPTURE,dark (z=270.0),cam_A,day,dev
+img_02_3,5.629647,none,KEEP,dark (z=277.6),cam_A,day,dev
+img_20_2,5.614945,none,KEEP,dark (z=273.5),cam_A,day,dev
+img_10_3,5.602078,none,KEEP,dark (z=270.0),cam_A,day,dev
 img_08_3,5.570456,dark,RECAPTURE,dark (z=261.6),cam_A,dusk,dev
-img_07_2,5.559154,dark,RECAPTURE,dark (z=258.6),cam_A,day,dev
+img_07_2,5.559154,none,KEEP,dark (z=258.6),cam_A,day,dev
 img_12_3,5.533346,dark,RECAPTURE,dark (z=252.0),cam_B,dusk,dev
 img_17_2,4.35552,glare,RECAPTURE,glare (z=76.9),cam_A,day,eval
 img_20_3,3.2748,glare,RECAPTURE,glare (z=25.4),cam_A,day,dev

@@ -1,16 +1,23 @@
 {
-  "status": "HOLD",
-  "reason_code": "REVIEW_PENDING",
-  "reason": "Top-B queue not reviewed by a human yet",
+  "status": "REWORK",
+  "reason_code": "RECAPTURE_RATE_HIGH",
+  "reason": "42% of images need recapture (> 15%); recapture before release",
   "owner": "Nguyen Duy Khanh (Lead)",
   "scope": "t02",
-  "evidence": [],
+  "evidence": [
+    "out/poc/ranked_review.csv",
+    "out/poc/review_queue.csv",
+    "out/poc/review_queue_reviewed.csv",
+    "out/poc/audit_log.jsonl",
+    "reports/internal_eval_dev.md",
+    "reports/review_slices.md"
+  ],
   "metrics": {
     "n_images": 96,
-    "recapture_rate": 0.4583,
+    "recapture_rate": 0.4167,
     "max_recapture_rate": 0.15,
-    "n_reviewed": 0
+    "n_reviewed": 20
   },
-  "ts": "2026-11-14T09:48:37+00:00",
-  "canonical": "HOLD"
+  "ts": "2026-11-14T14:52:58+00:00",
+  "canonical": "REWORK"
 }

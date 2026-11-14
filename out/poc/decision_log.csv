@@ -1,2 +1,3 @@
 ts,scope,status,canonical,reason_code,reason,owner,evidence
 2026-11-14T09:48:37+00:00,t02,HOLD,HOLD,REVIEW_PENDING,Top-B queue not reviewed by a human yet,Nguyen Duy Khanh (Lead),
+2026-11-14T14:52:58+00:00,t02,REWORK,REWORK,RECAPTURE_RATE_HIGH,42% of images need recapture (> 15%); recapture before release,Nguyen Duy Khanh (Lead),out/poc/ranked_review.csv;out/poc/review_queue.csv;out/poc/review_queue_reviewed.csv;out/poc/audit_log.jsonl;reports/internal_eval_dev.md;reports/review_slices.md

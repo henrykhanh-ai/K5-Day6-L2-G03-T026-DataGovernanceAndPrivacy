@@ -8,17 +8,18 @@
   "output": "out\\poc",
   "pipeline": "src.pipeline",
   "config_hash": "9f96589ae1bd",
-  "git_sha": "63a5a89",
-  "runtime_seconds": 0.7715,
+  "git_sha": "ba2ed38",
+  "runtime_seconds": 0.5587,
   "stats": {
     "n_recapture": 44,
     "n_items": 96,
-    "n_reviewed": 0
+    "n_reviewed": 20,
+    "n_escalated": 0
   },
   "machine": {
-    "python": "3.13.4",
-    "platform": "Windows-10-10.0.19045-SP0",
-    "processor": "Intel64 Family 6 Model 158 Stepping 9, GenuineIntel"
+    "python": "3.12.8",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 141 Stepping 1, GenuineIntel"
   },
   "output_check": {
     "pred_file": "out\\poc\\ranked_review.csv",
