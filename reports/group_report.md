@@ -77,12 +77,55 @@
 - Failure case 2: ____
 - Latency / compute (máy, CPU, ms/item): ____
 
+### 06b · Kết quả human review theo slice (thành viên C · Thúy An)
+
+Nguồn: `reports/review_queue.csv` (20 ảnh top-B đã duyệt) → `python -m src.review_slices_t02` → `reports/review_slices.md`.
+Đơn vị = 1 ảnh trong queue; "xác nhận lỗi" = reviewer approve (hoặc edit sang một loại lỗi). Đây là **precision của queue theo
+đánh giá reviewer**, *không phải* Recall@20 (recall cần nhãn cho cả ảnh ngoài queue → gold set dev của B / GT ẩn của giảng viên).
+
+- Tổng: **16/20 = 0,80 (Wilson 95% CI 0,58–0,92)** · quyết định: 16 approve, 4 reject, 0 escalate.
+
+| Slice | N trong queue | Xác nhận lỗi (Wilson 95% CI) | False alarm |
+|---|---|---|---|
+| light = day | 12 | 8/12 = 0,67 (0,39–0,86) | 4 |
+| light = dusk | 5 | 5/5 = 1,00 (0,57–1,00) | 0 |
+| light = night | 3 | 3/3 = 1,00 (0,44–1,00) | 0 |
+| camera_id = cam_A | 17 | 13/17 = 0,76 (0,53–0,90) | 4 |
+| camera_id = cam_B | 3 | 3/3 = 1,00 (0,44–1,00) | 0 |
+| loại lỗi = dark | 10 | 6/10 = 0,60 (0,31–0,83) | 4 |
+| loại lỗi = glare | 6 | 6/6 = 1,00 (0,61–1,00) | 0 |
+| loại lỗi = blur | 4 | 4/4 = 1,00 (0,51–1,00) | 0 |
+
+Nhận xét:
+- **Cả 4 false alarm đều cùng một kiểu**: `light=day`, `cam_A`, tín hiệu `dark` (img_02_3, img_20_2, img_10_3, img_07_2). Đo độ sáng:
+  các ảnh này chỉ sáng ~19–22% so với trung vị ảnh ngày ngoài queue, nhưng vật thể vẫn nhận ra được. Reviewer áp quy tắc
+  *"thiếu sáng nhẹ nhưng vẫn nhìn được vật thể → KEEP"*. Root cause: tín hiệu `dark` chỉ đo độ sáng (z-score theo slice light),
+  không đo "còn dùng được hay không" → ảnh tối vừa và ảnh tối đen (4–5%) đều bị đẩy lên top với điểm gần nhau (z ≈ 260–365).
+  Đây là điểm tranh luận: theo định nghĩa lỗi `dark` của đề, giảng viên có thể coi 4 ảnh này là lỗi thật → reject của reviewer
+  có thể là sai; nhóm ghi nhận để so khi có kết quả chấm chính thức.
+- `glare` và `blur` không có false alarm trong queue; bẫy "lóa cục bộ ở biển số" (img_18_2, ảnh đêm có độ sáng bình thường 105%)
+  được reviewer xác nhận là glare thật, không bị nhầm thành ảnh đêm.
+- Ảnh đêm và cam_B chỉ có 3 ảnh mỗi slice trong queue → CI rất rộng (0,44–1,00); không kết luận được pipeline có bỏ sót lỗi ở
+  hai slice này hay không — cần gold set dev.
+- 7/20 ảnh trong queue thuộc split `eval`: các quyết định review **không** được dùng để chỉnh ngưỡng (`configs/lab.yaml` giữ nguyên).
+
 ## 07 · Human & decision
 
-- Review queue (file, B, cách ưu tiên): ____
-- Cách override + audit log (`out/audit_log.jsonl`): ____
-- Decision policy + `reason_code` + owner: ____
-- Khi nào HOLD/REWORK thay vì tự động release: ____
+- Review queue (file, B, cách ưu tiên): `out/poc/review_queue.csv` + `contact_sheet.html`, B = 20 ảnh điểm nghi lỗi cao nhất
+  (cả split dev và eval). Reviewer: Thúy An (thành viên C). Bản đã duyệt lưu ở `reports/review_queue.csv`.
+- Cách override + audit log: reviewer chọn trong contact sheet → Export CSV → chép vào `out/poc/review_queue_reviewed.csv` → chạy lại
+  PoC. `reject` → KEEP/none, `edit` → đổi loại lỗi, `escalate` → HOLD cả lô. Mỗi quyết định ghi 1 dòng vào `out/poc/audit_log.jsonl`
+  (actor, item, before/after, lý do); điểm gốc không bị sửa.
+- Diễn biến review (minh chứng human-in-the-loop): lần 1 có 4 reject không ghi lý do + 2 escalate (img_08_3, img_18_2) → decision
+  **HOLD / ESCALATED_ITEMS**. Reviewer làm lại từ đầu với quy tắc thống nhất cho cả lô (ảnh ngày thiếu sáng nhẹ nhưng còn nhìn được
+  vật thể → reject, ghi lý do; ảnh đêm có đốm lóa ở biển số → glare thật) → 16 approve / 4 reject / 0 escalate.
+- Decision policy + `reason_code` + owner: chưa review → HOLD `REVIEW_PENDING`; có escalate → HOLD `ESCALATED_ITEMS`; tỉ lệ RECAPTURE
+  > 15% → REWORK `RECAPTURE_RATE_HIGH`; còn lại → GO `QC_PASSED`. Owner lấy từ `configs/lab.yaml`.
+- Kết quả cuối: **REWORK / RECAPTURE_RATE_HIGH** — 42% ảnh (40/96) cần chụp lại sau review (> ngưỡng 15%) → lô chưa được phát hành.
+- Khi nào HOLD/REWORK thay vì tự động release: luôn HOLD khi chưa có người duyệt hoặc có mục escalate; REWORK khi tỉ lệ ảnh hỏng
+  vượt ngưỡng đã chốt trước khi chạy eval.
+- Khai báo công cụ AI (thành viên C): dùng Claude để hướng dẫn quy trình, đo độ sáng tham khảo và viết `src/review_slices_t02.py`
+  + test; các quyết định approve/reject do reviewer tự chọn trên contact sheet.
 
 ## 08 · Reproduce & tests
 

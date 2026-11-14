@@ -1,5 +1,5 @@
 member,git_author_name,git_email,role,modules_files,commit_shas,evidence_note,presenter
 Member A,Nguyen Duy Khanh,,Lead / Core algorithm,src/features_t02.py; src/pipeline.py; src/baselines/t02_laplacian.py; tests/test_t02_pipeline.py; configs/lab.yaml,,,
 Member B,,,Gold set + failure modes,reports/dev_gold_labels.csv; demo/,,,
-Member C,,,Reviewer + slice/uncertainty,reports/review_queue.csv; results section,,,
+Member C,nguyenthithuyan091005-svg,nguyenthithuyan091005@gmail.com,Reviewer + slice/uncertainty,reports/review_queue.csv; src/review_slices_t02.py; tests/test_review_slices_t02.py; reports/review_slices.md; group_report.md mục 06b + 07,,Duyệt 20 ảnh top-B (16 approve / 4 reject có lý do); audit_log.jsonl ghi actor=Thúy An; decision HOLD→REWORK; bảng slice light/camera + Wilson 95% CI,
 Member D,,,Report + demo + ablation,reports/group_report.md; demo/,,,
