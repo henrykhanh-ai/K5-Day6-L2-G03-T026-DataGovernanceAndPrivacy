@@ -1,0 +1,2 @@
+ts,scope,status,canonical,reason_code,reason,owner,evidence
+2026-11-14T16:46:29+00:00,t02,REWORK,REWORK,RECAPTURE_RATE_HIGH,42% of images need recapture (> 15%); recapture before release,Nguyen Duy Khanh (Lead),out/ranked_review.csv;out/review_queue.csv;out/review_queue_reviewed.csv;out/audit_log.jsonl;reports/internal_eval_dev.md;reports/review_slices.md

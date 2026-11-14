@@ -1,0 +1,23 @@
+{
+  "status": "REWORK",
+  "reason_code": "RECAPTURE_RATE_HIGH",
+  "reason": "42% of images need recapture (> 15%); recapture before release",
+  "owner": "Nguyen Duy Khanh (Lead)",
+  "scope": "t02",
+  "evidence": [
+    "out/ranked_review.csv",
+    "out/review_queue.csv",
+    "out/review_queue_reviewed.csv",
+    "out/audit_log.jsonl",
+    "reports/internal_eval_dev.md",
+    "reports/review_slices.md"
+  ],
+  "metrics": {
+    "n_images": 96,
+    "recapture_rate": 0.4167,
+    "max_recapture_rate": 0.15,
+    "n_reviewed": 20
+  },
+  "ts": "2026-11-14T16:46:29+00:00",
+  "canonical": "REWORK"
+}
