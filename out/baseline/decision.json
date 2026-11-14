@@ -1,0 +1,13 @@
+{
+  "status": "HOLD",
+  "reason_code": "BASELINE_ONLY",
+  "reason": "Random baseline: never release on this",
+  "owner": "Nguyen Duy Khanh (Lead)",
+  "scope": "t02",
+  "evidence": [
+    "out\\baseline\\ranked_review.csv"
+  ],
+  "metrics": {},
+  "ts": "2026-11-14T09:41:32+00:00",
+  "canonical": "HOLD"
+}
