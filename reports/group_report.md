@@ -12,7 +12,7 @@
 | Challenge | T02 · Raw QC Triage — xếp hạng ảnh nghi lỗi (blur / glare / dark / compression), quyết định KEEP / RECAPTURE |
 | Thành viên (4) + vai trò | 1. Nguyễn Duy Khánh — Henry (Lead / Core algorithm / Integrator) · 2. Quân (Gold set + failure mode) · 3. Nguyễn Thị Thúy An (Reviewer + slice/độ bất định) · 4. Lê Ngọc Bích Loan (Report + demo) |
 | Git URL | https://github.com/henrykhanh-ai/K5-Day6-L2-G03-T026-DataGovernanceAndPrivacy |
-| Tag `demo-180m` (commit) | trỏ tới commit merge report này trên `main` — xem `git rev-parse demo-180m` (một commit không thể tự chứa SHA của chính nó) |
+| Tag `demo-180m` (commit) | `edde9a2` (14/11/2026 23:20) — bản demo; **chưa gồm** ablation (`tools/ablation_t02.py`, `reports/ablation_dev.md`), ảnh failure case trong `demo/` và `.mailmap` — các phần này thêm ở `384c4d8` (23:29), sau mốc demo, nằm trong `final-24h` |
 | Tag `final-24h` (commit) | commit cuối sau +24h — xem `git rev-parse final-24h` |
 | Deadline (giờ VN) | `demo-180m`: phút 180 của buổi lab 14/11/2026 · `final-24h`: +24h sau buổi lab (15/11/2026), theo lịch trong `README.md` |
 
