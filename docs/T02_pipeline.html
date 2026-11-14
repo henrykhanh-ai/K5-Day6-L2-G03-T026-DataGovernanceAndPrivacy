@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>G03 · T02 Raw QC Pipeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* layout: một cột đọc, sơ đồ rộng tràn cột, chú thích dưới mỗi hình */
+  --bg: #f6f7f9;
+  --panel: #ffffff;
+  --ink: #1b2430;
+  --muted: #5b6676;
+  --line: #9aa5b4;
+  --accent: #1f5fbf;
+  --accent-soft: #e6eefb;
+  --human: #b26b00;
+  --human-soft: #fdf1dc;
+  --go: #1e7a46;
+  --rework: #b3261e;
+  --hold: #8a6d00;
+  --font-display: "IBM Plex Sans", "Segoe UI", Roboto, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Roboto, sans-serif;
+  --font-mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161d; --panel: #18202a; --ink: #e6ebf2; --muted: #9aa6b6; --line: #5c6879;
+    --accent: #7aa7f5; --accent-soft: #1d2b42; --human: #f0b45a; --human-soft: #3a2c14;
+    --go: #5fc48b; --rework: #f08079; --hold: #e3c35a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161d; --panel: #18202a; --ink: #e6ebf2; --muted: #9aa6b6; --line: #5c6879;
+  --accent: #7aa7f5; --accent-soft: #1d2b42; --human: #f0b45a; --human-soft: #3a2c14;
+  --go: #5fc48b; --rework: #f08079; --hold: #e3c35a; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.6 var(--font-body); }
+main { max-width: 1160px; margin: 0 auto; padding: 32px 20px 56px; display: grid; gap: 36px; }
+header { display: grid; gap: 8px; max-width: 760px; }
+.tag { font: 500 13px var(--font-mono); color: var(--accent); letter-spacing: .02em; }
+h1 { font: 700 32px/1.2 var(--font-display); margin: 0; text-wrap: balance; }
+h2 { font: 600 21px/1.3 var(--font-display); margin: 0 0 4px; text-wrap: balance; }
+p { margin: 0; max-width: 72ch; }
+.lead { color: var(--muted); font-size: 17px; }
+code, .mono { font-family: var(--font-mono); font-size: .9em; }
+section { display: grid; gap: 14px; }
+figure { margin: 0; background: var(--panel); border: 1px solid color-mix(in srgb, var(--line) 45%, transparent); border-radius: 12px; padding: 18px; overflow-x: auto; }
+figure svg { display: block; width: 100%; min-width: 760px; height: auto; color: var(--ink); }
+figcaption { margin-top: 10px; color: var(--muted); font-size: 14px; max-width: 90ch; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.fact { background: var(--panel); border: 1px solid color-mix(in srgb, var(--line) 45%, transparent); border-radius: 10px; padding: 12px 14px; }
+.fact b { display: block; font: 600 20px var(--font-display); font-variant-numeric: tabular-nums; }
+.fact span { color: var(--muted); font-size: 14px; }
+table { border-collapse: collapse; width: 100%; background: var(--panel); border-radius: 10px; overflow: hidden; font-size: 15px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid color-mix(in srgb, var(--line) 35%, transparent); vertical-align: top; }
+th { font-weight: 600; background: color-mix(in srgb, var(--accent-soft) 70%, var(--panel)); }
+.table-wrap { overflow-x: auto; border: 1px solid color-mix(in srgb, var(--line) 45%, transparent); border-radius: 10px; }
+pre { margin: 0; background: var(--panel); border: 1px solid color-mix(in srgb, var(--line) 45%, transparent); border-radius: 10px; padding: 14px 16px; overflow-x: auto; font: 13.5px/1.55 var(--font-mono); }
+footer { color: var(--muted); font-size: 14px; border-top: 1px solid color-mix(in srgb, var(--line) 40%, transparent); padding-top: 16px; }
+a { color: var(--accent); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* SVG roles */
+.box { fill: var(--panel); stroke: var(--line); stroke-width: 1.4; }
+.box-core { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2.2; }
+.box-human { fill: var(--human-soft); stroke: var(--human); stroke-width: 2.2; }
+.box-file { fill: none; stroke: var(--line); stroke-width: 1.2; stroke-dasharray: 5 4; }
+.edge { fill: none; stroke: var(--line); stroke-width: 1.6; }
+.edge-human { fill: none; stroke: var(--human); stroke-width: 1.8; }
+.arrowhead { fill: var(--line); }
+.arrowhead-human { fill: var(--human); }
+.t { fill: var(--ink); font: 13px var(--font-body); }
+.t-b { fill: var(--ink); font: 600 14px var(--font-body); }
+.t-s { fill: var(--muted); font: 11.5px var(--font-body); }
+.t-m { fill: var(--muted); font: 11.5px var(--font-mono); }
+.go { fill: color-mix(in srgb, var(--go) 14%, var(--panel)); stroke: var(--go); stroke-width: 2; }
+.rework { fill: color-mix(in srgb, var(--rework) 14%, var(--panel)); stroke: var(--rework); stroke-width: 2; }
+.hold { fill: color-mix(in srgb, var(--hold) 16%, var(--panel)); stroke: var(--hold); stroke-width: 2; }
+.t-go { fill: var(--go); font: 700 14px var(--font-body); }
+.t-rework { fill: var(--rework); font: 700 14px var(--font-body); }
+.t-hold { fill: var(--hold); font: 700 14px var(--font-body); }
+@media (max-width: 420px) { h1 { font-size: 26px; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div class="tag">AI20K · Day 06 · Nhóm G03 · Track T02</div>
+  <h1>T02 Raw QC Triage: pipeline 5 bước</h1>
+  <p class="lead">Chấm điểm “nghi lỗi” cho 96 ảnh camera xe (mờ, lóa, tối, vỡ khối JPEG), đưa 20 ảnh đáng ngờ nhất cho người duyệt, rồi quyết định KEEP / RECAPTURE cho từng ảnh và GO / HOLD / REWORK cho cả lô. Chạy bằng một lệnh, offline, seed 42.</p>
+</header>
+
+<div class="facts">
+  <div class="fact"><b>96 ảnh</b><span>40 ảnh split eval dùng để chấm</span></div>
+  <div class="fact"><b>B = 20</b><span>ngân sách review mỗi lô</span></div>
+  <div class="fact"><b>4 tín hiệu</b><span>không dùng nhãn ở bước nào</span></div>
+  <div class="fact"><b>z ≥ 3</b><span>ngưỡng RECAPTURE, chốt trước khi chấm</span></div>
+</div>
+
+<section>
+  <h2>1. Luồng 5 bước và file output</h2>
+  <figure>
+    <svg viewBox="0 0 1130 330" role="img" aria-label="Pipeline T02: dữ liệu đi qua load, process, rank, review rồi decide; quyết định là GO, REWORK hoặc HOLD">
+      <defs>
+        <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="arrowhead"/></marker>
+        <marker id="a1h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="arrowhead-human"/></marker>
+      </defs>
+      <!-- input -->
+      <rect x="10" y="100" width="128" height="84" rx="10" class="box"/>
+      <text x="74" y="128" text-anchor="middle" class="t-b">Dữ liệu vào</text>
+      <text x="74" y="148" text-anchor="middle" class="t-m">96 ảnh .jpg</text>
+      <text x="74" y="164" text-anchor="middle" class="t-m">images.csv</text>
+      <text x="74" y="178" text-anchor="middle" class="t-m">manifest.csv</text>
+      <!-- steps -->
+      <rect x="170" y="100" width="140" height="84" rx="10" class="box"/>
+      <text x="240" y="126" text-anchor="middle" class="t-b">01 load</text>
+      <text x="240" y="148" text-anchor="middle" class="t-s">kiểm sha256</text>
+      <text x="240" y="164" text-anchor="middle" class="t-s">kiểm đủ file ảnh</text>
+
+      <rect x="340" y="100" width="140" height="84" rx="10" class="box-core"/>
+      <text x="410" y="126" text-anchor="middle" class="t-b">02 process</text>
+      <text x="410" y="148" text-anchor="middle" class="t-s">4 tín hiệu lỗi</text>
+      <text x="410" y="164" text-anchor="middle" class="t-s">→ score + loại lỗi</text>
+
+      <rect x="510" y="100" width="140" height="84" rx="10" class="box"/>
+      <text x="580" y="126" text-anchor="middle" class="t-b">03 rank</text>
+      <text x="580" y="148" text-anchor="middle" class="t-s">xếp theo score</text>
+      <text x="580" y="164" text-anchor="middle" class="t-s">lấy top-20</text>
+
+      <rect x="680" y="100" width="140" height="84" rx="10" class="box-human"/>
+      <text x="750" y="126" text-anchor="middle" class="t-b">04 review</text>
+      <text x="750" y="148" text-anchor="middle" class="t-s">người duyệt ký tên</text>
+      <text x="750" y="164" text-anchor="middle" class="t-s">approve / reject / edit</text>
+
+      <polygon points="850,142 910,98 970,142 910,186" class="box"/>
+      <text x="910" y="138" text-anchor="middle" class="t-b">05</text>
+      <text x="910" y="155" text-anchor="middle" class="t-b">decide</text>
+
+      <!-- edges -->
+      <path d="M138 142H168" class="edge" marker-end="url(#a1)"/>
+      <path d="M310 142H338" class="edge" marker-end="url(#a1)"/>
+      <path d="M480 142H508" class="edge" marker-end="url(#a1)"/>
+      <path d="M650 142H678" class="edge-human" marker-end="url(#a1h)"/>
+      <path d="M820 142H848" class="edge" marker-end="url(#a1)"/>
+
+      <!-- outcomes -->
+      <path d="M940 120L1000 64" class="edge" marker-end="url(#a1)"/>
+      <path d="M970 142H998" class="edge" marker-end="url(#a1)"/>
+      <path d="M940 164L1000 220" class="edge" marker-end="url(#a1)"/>
+      <rect x="1002" y="40" width="118" height="48" rx="8" class="go"/>
+      <text x="1061" y="62" text-anchor="middle" class="t-go">GO</text>
+      <text x="1061" y="78" text-anchor="middle" class="t-s">RECAPTURE ≤ 15%</text>
+      <rect x="1002" y="118" width="118" height="48" rx="8" class="rework"/>
+      <text x="1061" y="140" text-anchor="middle" class="t-rework">REWORK</text>
+      <text x="1061" y="156" text-anchor="middle" class="t-s">RECAPTURE &gt; 15%</text>
+      <rect x="1002" y="196" width="124" height="48" rx="8" class="hold"/>
+      <text x="1064" y="218" text-anchor="middle" class="t-hold">HOLD</text>
+      <text x="1064" y="234" text-anchor="middle" class="t-s">chưa duyệt, escalate</text>
+
+      <!-- outputs -->
+      <path d="M410 184V236" class="edge" marker-end="url(#a1)"/>
+      <path d="M580 184V236" class="edge" marker-end="url(#a1)"/>
+      <path d="M750 184V236" class="edge-human" marker-end="url(#a1h)"/>
+      <path d="M910 186V236" class="edge" marker-end="url(#a1)"/>
+      <rect x="335" y="238" width="150" height="58" rx="8" class="box-file"/>
+      <text x="410" y="260" text-anchor="middle" class="t-m">ranked_review.csv</text>
+      <text x="410" y="278" text-anchor="middle" class="t-s">score + KEEP/RECAPTURE</text>
+      <rect x="505" y="238" width="150" height="58" rx="8" class="box-file"/>
+      <text x="580" y="260" text-anchor="middle" class="t-m">review_queue.csv</text>
+      <text x="580" y="278" text-anchor="middle" class="t-m">contact_sheet.html</text>
+      <rect x="675" y="238" width="150" height="58" rx="8" class="box-file"/>
+      <text x="750" y="260" text-anchor="middle" class="t-m">audit_log.jsonl</text>
+      <text x="750" y="278" text-anchor="middle" class="t-s">ai sửa, trước / sau, lý do</text>
+      <rect x="845" y="238" width="130" height="58" rx="8" class="box-file"/>
+      <text x="910" y="260" text-anchor="middle" class="t-m">decision.json</text>
+      <text x="910" y="278" text-anchor="middle" class="t-s">reason_code + owner</text>
+    </svg>
+    <figcaption>Ô xanh là phần thuật toán của nhóm (<code>src/features_t02.py</code>), ô cam là chỗ con người duyệt và ký tên. Nét đứt là file output trong <code>out/poc/</code>. Khi chưa ai duyệt, quyết định luôn là HOLD.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>2. Bước 02: bốn tín hiệu, mỗi tín hiệu so trong nhóm công bằng</h2>
+  <figure>
+    <svg viewBox="0 0 1130 320" role="img" aria-label="Bốn tín hiệu mờ, tối, lóa, vỡ khối được chuẩn hoá robust-z rồi gộp thành score; z từ 3 trở lên thì RECAPTURE">
+      <defs>
+        <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="arrowhead"/></marker>
+      </defs>
+      <rect x="10" y="120" width="110" height="76" rx="10" class="box"/>
+      <text x="65" y="152" text-anchor="middle" class="t-b">Ảnh</text>
+      <text x="65" y="172" text-anchor="middle" class="t-m">320 × 180</text>
+
+      <!-- four rows -->
+      <g>
+        <rect x="170" y="20" width="200" height="54" rx="8" class="box"/>
+        <text x="270" y="43" text-anchor="middle" class="t-b">Mờ</text>
+        <text x="270" y="61" text-anchor="middle" class="t-s">Laplacian variance (log)</text>
+        <rect x="170" y="94" width="200" height="54" rx="8" class="box"/>
+        <text x="270" y="117" text-anchor="middle" class="t-b">Tối</text>
+        <text x="270" y="135" text-anchor="middle" class="t-s">độ sáng TB + tỉ lệ pixel &lt; 30</text>
+        <rect x="170" y="168" width="200" height="54" rx="8" class="box"/>
+        <text x="270" y="191" text-anchor="middle" class="t-b">Lóa cục bộ</text>
+        <text x="270" y="209" text-anchor="middle" class="t-s">ô 8×8 có nhiều pixel &gt; 245</text>
+        <rect x="170" y="242" width="200" height="54" rx="8" class="box"/>
+        <text x="270" y="265" text-anchor="middle" class="t-b">Vỡ khối JPEG</text>
+        <text x="270" y="283" text-anchor="middle" class="t-s">gradient ở biên 8 / 16 px</text>
+      </g>
+      <path d="M120 150C145 150 145 47 168 47" class="edge" marker-end="url(#a2)"/>
+      <path d="M120 155C145 155 145 121 168 121" class="edge" marker-end="url(#a2)"/>
+      <path d="M120 162C145 162 145 195 168 195" class="edge" marker-end="url(#a2)"/>
+      <path d="M120 168C145 168 145 269 168 269" class="edge" marker-end="url(#a2)"/>
+
+      <!-- normalisation labels on edges -->
+      <path d="M370 47H598" class="edge" marker-end="url(#a2)"/>
+      <path d="M370 121H598" class="edge" marker-end="url(#a2)"/>
+      <path d="M370 195H598" class="edge" marker-end="url(#a2)"/>
+      <path d="M370 269H598" class="edge" marker-end="url(#a2)"/>
+      <text x="484" y="39" text-anchor="middle" class="t-s">so trong cùng camera_id</text>
+      <text x="484" y="66" text-anchor="middle" class="t-s">cam_B vốn mềm hơn</text>
+      <text x="484" y="113" text-anchor="middle" class="t-s">so trong cùng light</text>
+      <text x="484" y="140" text-anchor="middle" class="t-s">ảnh đêm tối là bình thường</text>
+      <text x="484" y="187" text-anchor="middle" class="t-s">so trên toàn bộ ảnh</text>
+      <text x="484" y="261" text-anchor="middle" class="t-s">so trên toàn bộ ảnh</text>
+
+      <rect x="600" y="28" width="110" height="38" rx="8" class="box"/>
+      <text x="655" y="52" text-anchor="middle" class="t-m">z_blur</text>
+      <rect x="600" y="102" width="110" height="38" rx="8" class="box"/>
+      <text x="655" y="126" text-anchor="middle" class="t-m">z_dark</text>
+      <rect x="600" y="176" width="110" height="38" rx="8" class="box"/>
+      <text x="655" y="200" text-anchor="middle" class="t-m">z_glare</text>
+      <rect x="600" y="250" width="110" height="38" rx="8" class="box"/>
+      <text x="655" y="274" text-anchor="middle" class="t-m">z_compression</text>
+
+      <path d="M710 47C735 47 735 140 758 140" class="edge" marker-end="url(#a2)"/>
+      <path d="M710 121C735 121 735 150 758 150" class="edge" marker-end="url(#a2)"/>
+      <path d="M710 195C735 195 735 166 758 166" class="edge" marker-end="url(#a2)"/>
+      <path d="M710 269C735 269 735 176 758 176" class="edge" marker-end="url(#a2)"/>
+
+      <rect x="760" y="116" width="170" height="84" rx="10" class="box-core"/>
+      <text x="845" y="142" text-anchor="middle" class="t-b">score</text>
+      <text x="845" y="162" text-anchor="middle" class="t-m">max log1p(z)</text>
+      <text x="845" y="182" text-anchor="middle" class="t-s">loại lỗi = tín hiệu lớn nhất</text>
+
+      <path d="M930 158H958" class="edge" marker-end="url(#a2)"/>
+      <polygon points="960,158 1000,124 1040,158 1000,192" class="box"/>
+      <text x="1000" y="162" text-anchor="middle" class="t-b">z ≥ 3?</text>
+      <path d="M1030 148L1060 112" class="edge" marker-end="url(#a2)"/>
+      <path d="M1030 168L1060 204" class="edge" marker-end="url(#a2)"/>
+      <text x="1050" y="138" class="t-s">có</text>
+      <text x="1050" y="188" class="t-s">không</text>
+      <rect x="1060" y="88" width="64" height="34" rx="7" class="rework"/>
+      <text x="1092" y="110" text-anchor="middle" class="t-rework" style="font-size:11px">RECAP.</text>
+      <rect x="1060" y="196" width="64" height="34" rx="7" class="go"/>
+      <text x="1092" y="218" text-anchor="middle" class="t-go" style="font-size:12px">KEEP</text>
+    </svg>
+    <figcaption>Robust-z = (giá trị − trung vị) / (1,4826 × MAD), tính riêng trong từng nhóm; nhóm dưới 6 ảnh dùng độ phân tán toàn bộ. log1p đưa bốn tín hiệu về cùng thang để so được với nhau (một ảnh tối lệch 270σ và một ảnh mờ lệch 10σ đều chắc chắn là lỗi).</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>3. Vòng human-in-the-loop</h2>
+  <figure>
+    <svg viewBox="0 0 1130 220" role="img" aria-label="Pipeline sinh contact sheet, người duyệt chọn quyết định và export CSV, chạy lại pipeline để áp override và ghi audit log">
+      <defs>
+        <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="arrowhead"/></marker>
+        <marker id="a3h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="arrowhead-human"/></marker>
+      </defs>
+      <rect x="10" y="40" width="170" height="70" rx="10" class="box-core"/>
+      <text x="95" y="70" text-anchor="middle" class="t-b">Pipeline</text>
+      <text x="95" y="90" text-anchor="middle" class="t-s">bước 03 rank</text>
+
+      <rect x="250" y="40" width="190" height="70" rx="10" class="box"/>
+      <text x="345" y="70" text-anchor="middle" class="t-b">contact_sheet.html</text>
+      <text x="345" y="90" text-anchor="middle" class="t-s">20 ảnh + score + gợi ý</text>
+
+      <rect x="510" y="40" width="190" height="70" rx="10" class="box-human"/>
+      <text x="605" y="70" text-anchor="middle" class="t-b">Người duyệt</text>
+      <text x="605" y="90" text-anchor="middle" class="t-s">nhập tên, chọn quyết định</text>
+
+      <rect x="770" y="40" width="190" height="70" rx="10" class="box"/>
+      <text x="865" y="66" text-anchor="middle" class="t-m">review_queue_</text>
+      <text x="865" y="82" text-anchor="middle" class="t-m">reviewed.csv</text>
+      <text x="865" y="99" text-anchor="middle" class="t-s">nút Export CSV</text>
+
+      <path d="M180 75H248" class="edge" marker-end="url(#a3)"/>
+      <text x="214" y="66" text-anchor="middle" class="t-s">sinh</text>
+      <path d="M440 75H508" class="edge-human" marker-end="url(#a3h)"/>
+      <text x="474" y="66" text-anchor="middle" class="t-s">mở xem</text>
+      <path d="M700 75H768" class="edge-human" marker-end="url(#a3h)"/>
+      <text x="734" y="66" text-anchor="middle" class="t-s">export</text>
+
+      <path d="M865 110V170H95V112" class="edge" marker-end="url(#a3)"/>
+      <text x="480" y="162" text-anchor="middle" class="t-s">chép vào out/poc/ rồi chạy lại (task 08) → bước 04 áp override</text>
+
+      <path d="M960 75H1018" class="edge" marker-end="url(#a3)"/>
+      <rect x="1020" y="40" width="104" height="70" rx="10" class="box-file"/>
+      <text x="1072" y="70" text-anchor="middle" class="t-m">audit_log</text>
+      <text x="1072" y="88" text-anchor="middle" class="t-m">.jsonl</text>
+      <text x="565" y="205" text-anchor="middle" class="t-s">approve: giữ gợi ý · reject: ảnh ổn → KEEP · edit: đổi loại lỗi · escalate: giữ HOLD chờ người thứ hai</text>
+    </svg>
+    <figcaption>Dòng có quyết định mà thiếu tên người duyệt thì pipeline dừng với lỗi rõ ràng. Mỗi thay đổi ghi một dòng vào audit log (ai, lúc nào, trước, sau, lý do); score gốc không bao giờ bị sửa.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>4. Baseline so với PoC</h2>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th></th><th>Baseline · <code>src/baselines/t02_laplacian.py</code></th><th>PoC · <code>src/pipeline.py</code></th></tr></thead>
+    <tbody>
+      <tr><td>Tín hiệu</td><td>1: độ nét Laplacian toàn ảnh</td><td>4: mờ, tối, lóa cục bộ, vỡ khối</td></tr>
+      <tr><td>Chuẩn hoá theo slice</td><td>Không</td><td>Có: camera cho độ nét, light cho độ sáng</td></tr>
+      <tr><td>Bắt được</td><td>Chủ yếu ảnh mờ</td><td>Mờ, tối, lóa, vỡ khối</td></tr>
+      <tr><td>Pool / B / seed</td><td>40 ảnh eval / 20 / 42</td><td>40 ảnh eval / 20 / 42</td></tr>
+      <tr><td>Metric chính</td><td colspan="2">Defect Recall@20 + Precision@20 trên split eval (giảng viên chấm bằng ground truth ẩn)</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section>
+  <h2>5. Chạy thử</h2>
+  <pre>py -3 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\python.exe -m src.main --config configs/lab.yaml --track t02 --output out/poc --run-name poc --offline --seed 42</pre>
+  <p>Đã kiểm tra trên máy sạch và Google Colab: pytest 53 passed, 0 failed; mọi lệnh <code>src.main</code> trả <code>status=0</code>. Trong VS Code: <code>Ctrl+Shift+B</code> chạy PoC.</p>
+</section>
+
+<footer>Nhóm G03 · Repo: <a href="https://github.com/henrykhanh-ai/K5-Day6-L2-G03-T026-DataGovernanceAndPrivacy">henrykhanh-ai/K5-Day6-L2-G03-T026-DataGovernanceAndPrivacy</a> · Đề bài: <code>docs/tracks/T02.md</code> · Dữ liệu fixture synthetic, CC0, không có PII.</footer>
+</main>
+</body>
+</html>

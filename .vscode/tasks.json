@@ -1,0 +1,90 @@
+{
+  // Day06 T02 - chay bang Ctrl+Shift+P > "Tasks: Run Task" (Ctrl+Shift+B = Run PoC)
+  "version": "2.0.0",
+  "options": {
+    "cwd": "${workspaceFolder}",
+    "env": { "PYTHONUTF8": "1" }
+  },
+  "windows": { "options": { "shell": { "executable": "powershell.exe", "args": ["-NoProfile", "-Command"] } } },
+  "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+  "problemMatcher": [],
+  "tasks": [
+    {
+      "label": "01 Setup: tao .venv + cai thu vien",
+      "type": "shell",
+      "command": "py -3 -m venv .venv; .\\.venv\\Scripts\\python.exe -m pip install -q --upgrade pip; .\\.venv\\Scripts\\python.exe -m pip install -q -r requirements.txt"
+    },
+    {
+      "label": "02 Preflight (moi truong, fixtures, offline guard)",
+      "type": "shell",
+      "command": ".\\.venv\\Scripts\\python.exe -m tools.preflight"
+    },
+    {
+      "label": "03 Test (pytest -q, phai 0 failed)",
+      "type": "shell",
+      "command": ".\\.venv\\Scripts\\python.exe -m pytest -q",
+      "group": { "kind": "test", "isDefault": true }
+    },
+    {
+      "label": "04 Verify manifests (sha256)",
+      "type": "shell",
+      "command": ".\\.venv\\Scripts\\python.exe -m tools.verify_manifests"
+    },
+    {
+      "label": "05 Baseline T02 (1 nguong Laplacian, seed 42)",
+      "type": "shell",
+      "command": ".\\.venv\\Scripts\\python.exe -m src.main --track t02 --pipeline src.baselines.t02_laplacian --output out/baseline --run-name baseline --offline --seed 42"
+    },
+    {
+      "label": "06 Run PoC T02 (src/pipeline.py)",
+      "type": "shell",
+      "command": ".\\.venv\\Scripts\\python.exe -m src.main --config configs/lab.yaml --track t02 --output out/poc --run-name poc --offline --seed 42",
+      "group": { "kind": "build", "isDefault": true }
+    },
+    {
+      "label": "07 Mo contact sheet (review queue HTML)",
+      "type": "shell",
+      "command": "if (Test-Path out/poc/contact_sheet.html) { Start-Process out/poc/contact_sheet.html } else { Start-Process out/baseline/contact_sheet.html }"
+    },
+    {
+      "label": "08 Ap review: chep review_queue_reviewed.csv tu Downloads roi chay lai PoC",
+      "type": "shell",
+      "command": "Copy-Item \"$HOME\\Downloads\\review_queue_reviewed.csv\" out/poc/review_queue_reviewed.csv -Force; .\\.venv\\Scripts\\python.exe -m src.main --config configs/lab.yaml --track t02 --output out/poc --run-name poc --offline --seed 42"
+    },
+    {
+      "label": "09 Eval baseline + PoC + compare (can overlay giang vien, khong co se exit 2)",
+      "type": "shell",
+      "command": ".\\.venv\\Scripts\\python.exe -m src.evaluate --track t02 --pred out/baseline/ranked_review.csv --run-name baseline --out reports/metrics_baseline.json; .\\.venv\\Scripts\\python.exe -m src.evaluate --track t02 --pred out/poc/ranked_review.csv --run-name poc --out reports/metrics_poc.json; .\\.venv\\Scripts\\python.exe -m src.compare reports/metrics_baseline.json reports/metrics_poc.json --out reports/table1_baseline_vs_poc.md"
+    },
+    {
+      "label": "10 Kiem commit tung thanh vien (git shortlog)",
+      "type": "shell",
+      "command": "git shortlog -sne --all"
+    },
+    {
+      "label": "11 Tag demo-180m (truoc phut 180)",
+      "type": "shell",
+      "command": "git tag -a demo-180m -m 'Demo freeze at minute 180'; git push origin demo-180m"
+    },
+    {
+      "label": "12 Tag final-24h (nop cuoi)",
+      "type": "shell",
+      "command": "git tag -a final-24h -m 'Final submission'; git push origin final-24h"
+    },
+    {
+      "label": "13 Gold set: tao sheet + gallery (thanh vien B gan nhan)",
+      "type": "shell",
+      "command": ".\\.venv\\Scripts\\python.exe -m src.internal_eval_t02 template; start reports\\dev_gold_gallery.html"
+    },
+    {
+      "label": "14 Danh gia noi bo dev (Recall/Precision@20 + slice + Wilson CI)",
+      "type": "shell",
+      "command": ".\\.venv\\Scripts\\python.exe -m src.internal_eval_t02 evaluate"
+    },
+    {
+      "label": "00 Clean start: Setup -> Preflight -> Test -> Baseline -> PoC",
+      "dependsOrder": "sequence",
+      "dependsOn": ["01 Setup: tao .venv + cai thu vien", "02 Preflight (moi truong, fixtures, offline guard)", "03 Test (pytest -q, phai 0 failed)", "05 Baseline T02 (1 nguong Laplacian, seed 42)", "06 Run PoC T02 (src/pipeline.py)"]
+    }
+  ]
+}
